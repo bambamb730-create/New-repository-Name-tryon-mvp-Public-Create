@@ -1,5 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Магазин в готическом стиле</title>
+  <style>
+    /* 1. Базовый черный фон */
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    /* 2. Пузырики */
+    .bubble {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      animation: float linear infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh) scale(0.5); opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+    }
+
+    /* 3. Контейнер каталога */
+    .catalog {
+      position: relative;
+      z-index: 10; /* чтобы карточки были поверх пузырьков */
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 50px;
+    }
+
+    /* 4. Карточки товаров */
+    .product-card {
+      background: rgba(17, 17, 17, 0.8);
+      border: 1px solid #fff;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      color: #fff;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #fff;
+    }
+
+    .product-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
+    .product-card button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: none;
+      border: 1px solid #fff;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .product-card button:hover {
+      background: #fff;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Контейнер для пузырьков -->
+  <div id="bubbles-container"></div>
+
+  <!-- 2. Контейнер каталога -->
+  <div class="catalog">
+    <div class="product-card">
+      <img src="https://via.placeholder.com/200x300?text=Товар+1" alt="Товар 1">
+      <h3>Товар 1</h3>
+      <p>Цена: 1000₽</p>
+      <button>Примерить</button>
+    </div>
+    <div class="product-card">
+      <img src="https://via.placeholder.com/200x300?text=Товар+2" alt="Товар 2">
+      <h3>Товар 2</h3>
+      <p>Цена: 1500₽</p>
+      <button>Примерить</button>
+    </div>
+    <div class="product-card">
+      <img src="https://via.placeholder.com/200x300?text=Товар+3" alt="Товар 3">
+      <h3>Товар 3</h3>
+      <p>Цена: 2000₽</p>
+      <button>Примерить</button>
+    </div>
+  </div>
+
+  <!-- 3. JS для пузырьков -->
+  <script>
+    const container = document.getElementById('bubbles-container');
+    const bubblesCount = 50; // количество пузырьков
+
+    for (let i = 0; i < bubblesCount; i++) {
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble');
+
+      // случайный размер и позиция
+      const size = Math.random() * 20 + 5; // 5px - 25px
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.left = `${Math.random() * 100}vw`;
+      bubble.style.animationDuration = `${5 + Math.random() * 10}s`; // 5-15 секунд
+
+      container.appendChild(bubble);
+    }
+  </script>
+</body>
+</html>
 <head>
   <title>My AI Try-On</title>
 </head>
