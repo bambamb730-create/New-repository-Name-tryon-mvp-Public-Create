@@ -2,133 +2,455 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Магазин в готическом стиле</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Virtual Try-On — Premium Dark</title>
   <style>
-    /* 1. Базовый черный фон */
+    :root {
+      --bg: #050505;
+      --bg-soft: #111;
+      --text: #f5f5f5;
+      --muted: #b8b8b8;
+      --line: rgba(255, 255, 255, 0.2);
+      --glass: rgba(255, 255, 255, 0.06);
+      --glow: rgba(255, 255, 255, 0.22);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
     body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      background: #000;
-      height: 100vh;
-      font-family: Arial, sans-serif;
+      min-height: 100%;
+      background: radial-gradient(circle at 20% 0%, #1b1b1b 0%, var(--bg) 45%, #000 100%);
+      color: var(--text);
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      scroll-behavior: smooth;
     }
 
-    /* 2. Пузырики */
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    #bubbles-container {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     .bubble {
       position: absolute;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.35);
       border-radius: 50%;
+      backdrop-filter: blur(2px);
       animation: float linear infinite;
     }
 
     @keyframes float {
-      0% { transform: translateY(100vh) scale(0.5); opacity: 0.5; }
-      50% { opacity: 1; }
-      100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+      0% {
+        transform: translateY(100vh) scale(0.6);
+        opacity: 0;
+      }
+      25% {
+        opacity: 0.7;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1.15);
+        opacity: 0;
+      }
     }
 
-    /* 3. Контейнер каталога */
-    .catalog {
+    .page {
       position: relative;
-      z-index: 10; /* чтобы карточки были поверх пузырьков */
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      padding: 50px;
+      z-index: 2;
+      width: min(1180px, 92vw);
+      margin: 0 auto;
+      padding-bottom: 80px;
     }
 
-    /* 4. Карточки товаров */
-    .product-card {
-      background: rgba(17, 17, 17, 0.8);
-      border: 1px solid #fff;
-      border-radius: 8px;
-      padding: 15px;
+    .hero {
+      padding: 88px 0 44px;
       text-align: center;
-      color: #fff;
-      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-chip {
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #ddd;
+      background: rgba(255, 255, 255, 0.04);
+      letter-spacing: 0.06em;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+    }
+
+    .hero p {
+      max-width: 720px;
+      margin: 18px auto 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2vw, 19px);
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      padding: 12px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06));
+      border-color: rgba(255, 255, 255, 0.38);
+    }
+
+    .section-title {
+      margin: 42px 0 20px;
+      font-size: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .product-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
     }
 
     .product-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #fff;
+      transform: translateY(-6px);
+      box-shadow: 0 22px 42px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--glow);
+      border-color: rgba(255, 255, 255, 0.42);
+    }
+
+    .badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.44);
+      background: rgba(0, 0, 0, 0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
     }
 
     .product-card img {
       width: 100%;
-      height: auto;
-      border-radius: 4px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(0.15);
     }
 
-    .product-card button {
-      margin-top: 10px;
-      padding: 8px 12px;
-      background: none;
-      border: 1px solid #fff;
+    .card-content {
+      padding: 14px;
+    }
+
+    .card-content h3 {
+      margin: 2px 0 6px;
+      font-size: 18px;
+    }
+
+    .card-price {
+      margin: 0;
       color: #fff;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
     }
 
-    .product-card button:hover {
-      background: #fff;
-      color: #000;
+    .sizes {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .muted-block {
+      margin-top: 46px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--glass);
+      padding: 22px;
+    }
+
+    .steps {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: #d0d0d0;
+      line-height: 1.7;
+    }
+
+    .faq-item {
+      border-top: 1px solid var(--line);
+      padding: 12px 0;
+    }
+
+    .faq-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    dialog {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      width: min(780px, 92vw);
+      padding: 0;
+      color: var(--text);
+      background: linear-gradient(145deg, #111, #050505);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.75);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.72);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .mock {
+      border: 1px dashed rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c7c7c7;
+      text-align: center;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .progress {
+      margin-top: 10px;
+      height: 8px;
+      width: 100%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 58%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(195, 195, 195, 0.85));
+    }
+
+    @media (max-width: 760px) {
+      .hero {
+        padding-top: 64px;
+      }
+
+      .modal-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-actions {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
+  <div id="bubbles-container" aria-hidden="true"></div>
 
-  <!-- 1. Контейнер для пузырьков -->
-  <div id="bubbles-container"></div>
+  <main class="page">
+    <section class="hero">
+      <span class="hero-chip">Virtual fitting room</span>
+      <h1>AI-примерка одежды в твоём фирменном dark-стиле</h1>
+      <p>
+        Минималистичный чёрно-белый дизайн, стеклянные карточки и фокус на продукте.
+        Техническую интеграцию с API добавим следующим шагом — UX уже готов к запуску.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="startTryOn">Начать примерку</button>
+        <a class="btn" href="#catalog">Смотреть каталог</a>
+      </div>
+    </section>
 
-  <!-- 2. Контейнер каталога -->
-  <div class="catalog">
-    <div class="product-card">
-      <img src="https://via.placeholder.com/200x300?text=Товар+1" alt="Товар 1">
-      <h3>Товар 1</h3>
-      <p>Цена: 1000₽</p>
-      <button>Примерить</button>
-    </div>
-    <div class="product-card">
-      <img src="https://via.placeholder.com/200x300?text=Товар+2" alt="Товар 2">
-      <h3>Товар 2</h3>
-      <p>Цена: 1500₽</p>
-      <button>Примерить</button>
-    </div>
-    <div class="product-card">
-      <img src="https://via.placeholder.com/200x300?text=Товар+3" alt="Товар 3">
-      <h3>Товар 3</h3>
-      <p>Цена: 2000₽</p>
-      <button>Примерить</button>
-    </div>
-  </div>
+    <section id="catalog">
+      <h2 class="section-title">Каталог</h2>
+      <div class="catalog">
+        <article class="product-card">
+          <span class="badge">Top</span>
+          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=80" alt="Черное пальто">
+          <div class="card-content">
+            <h3>Midnight Coat</h3>
+            <p class="card-price">12 900₽</p>
+            <p class="sizes">Размеры: S · M · L</p>
+            <div class="card-actions">
+              <button class="btn btn-primary open-modal">Примерить</button>
+              <button class="btn">Подробнее</button>
+            </div>
+          </div>
+        </article>
 
-  <!-- 3. JS для пузырьков -->
+        <article class="product-card">
+          <span class="badge">New</span>
+          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80" alt="Серый худи">
+          <div class="card-content">
+            <h3>Shadow Hoodie</h3>
+            <p class="card-price">6 400₽</p>
+            <p class="sizes">Размеры: XS · S · M · L</p>
+            <div class="card-actions">
+              <button class="btn btn-primary open-modal">Примерить</button>
+              <button class="btn">Подробнее</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <span class="badge">Hot</span>
+          <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=700&q=80" alt="Белая рубашка">
+          <div class="card-content">
+            <h3>Monochrome Shirt</h3>
+            <p class="card-price">5 200₽</p>
+            <p class="sizes">Размеры: S · M · L · XL</p>
+            <div class="card-actions">
+              <button class="btn btn-primary open-modal">Примерить</button>
+              <button class="btn">Подробнее</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="muted-block">
+      <h2 class="section-title" style="margin-top: 0;">Как это работает</h2>
+      <ol class="steps">
+        <li>Выбери товар в каталоге и нажми «Примерить».</li>
+        <li>Загрузи своё фото в полный рост (UI-заглушка уже готова).</li>
+        <li>Получи результат AI-примерки и сохрани изображение.</li>
+      </ol>
+    </section>
+
+    <section class="muted-block">
+      <h2 class="section-title" style="margin-top: 0;">FAQ</h2>
+      <div class="faq-item">
+        <strong>Фото будут храниться?</strong>
+        <span>Можно настроить удаление после генерации — это лучший практический вариант для privacy.</span>
+      </div>
+      <div class="faq-item">
+        <strong>Когда подключим API Kling?</strong>
+        <span>После загрузки основной базы каталога: фронт уже подготовлен под этот сценарий.</span>
+      </div>
+      <div class="faq-item">
+        <strong>Можно ли сделать стиль полностью black/white?</strong>
+        <span>Да, текущий дизайн уже построен в черно-белой гамме с серыми переходами и белыми пузырьками.</span>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="tryOnModal">
+    <div class="modal-head">
+      <strong>AI примерка (демо UI)</strong>
+      <button class="btn" id="closeModal">Закрыть</button>
+    </div>
+    <div class="modal-grid">
+      <div>
+        <div class="mock">Загрузи фото пользователя<br>в полный рост</div>
+        <button class="btn" style="margin-top: 10px; width: 100%;">Загрузить фото</button>
+      </div>
+      <div>
+        <div class="mock">Здесь появится результат try-on</div>
+        <button class="btn btn-primary" style="margin-top: 10px; width: 100%;">Сгенерировать</button>
+        <div class="progress" aria-label="Прогресс генерации"><span></span></div>
+      </div>
+    </div>
+  </dialog>
+
   <script>
     const container = document.getElementById('bubbles-container');
-    const bubblesCount = 50; // количество пузырьков
+    const bubblesCount = 42;
 
     for (let i = 0; i < bubblesCount; i++) {
       const bubble = document.createElement('div');
-      bubble.classList.add('bubble');
-
-      // случайный размер и позиция
-      const size = Math.random() * 20 + 5; // 5px - 25px
+      bubble.className = 'bubble';
+      const size = Math.random() * 26 + 8;
       bubble.style.width = `${size}px`;
       bubble.style.height = `${size}px`;
       bubble.style.left = `${Math.random() * 100}vw`;
-      bubble.style.animationDuration = `${5 + Math.random() * 10}s`; // 5-15 секунд
-
+      bubble.style.animationDuration = `${7 + Math.random() * 14}s`;
+      bubble.style.animationDelay = `${Math.random() * 9}s`;
       container.appendChild(bubble);
     }
+
+    const modal = document.getElementById('tryOnModal');
+    const openButtons = document.querySelectorAll('.open-modal');
+    const startButton = document.getElementById('startTryOn');
+    const closeButton = document.getElementById('closeModal');
+
+    function openTryOnModal() {
+      modal.showModal();
+    }
+
+    openButtons.forEach((button) => button.addEventListener('click', openTryOnModal));
+    startButton.addEventListener('click', openTryOnModal);
+    closeButton.addEventListener('click', () => modal.close());
   </script>
-</body>
-</html>
-<head>
-  <title>My AI Try-On</title>
-</head>
-<body>
-  <h1>AI Virtual Try-On MVP</h1>
 </body>
 </html>
