@@ -79,6 +79,31 @@
       text-align: center;
     }
 
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .brand img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      color: #dfdfdf;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
     .hero-chip {
       display: inline-block;
       margin-bottom: 18px;
@@ -320,6 +345,10 @@
 
   <main class="page">
     <section class="hero">
+      <div class="brand">
+        <img src="logo.png" alt="Логотип магазина">
+        <span class="brand-name">Seget Try-On</span>
+      </div>
       <span class="hero-chip">Virtual fitting room</span>
       <h1>AI-примерка одежды в твоём фирменном dark-стиле</h1>
       <p>
@@ -334,49 +363,7 @@
 
     <section id="catalog">
       <h2 class="section-title">Каталог</h2>
-      <div class="catalog">
-        <article class="product-card">
-          <span class="badge">Top</span>
-          <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=80" alt="Черное пальто">
-          <div class="card-content">
-            <h3>Midnight Coat</h3>
-            <p class="card-price">12 900₽</p>
-            <p class="sizes">Размеры: S · M · L</p>
-            <div class="card-actions">
-              <button class="btn btn-primary open-modal">Примерить</button>
-              <button class="btn">Подробнее</button>
-            </div>
-          </div>
-        </article>
-
-        <article class="product-card">
-          <span class="badge">New</span>
-          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=700&q=80" alt="Серый худи">
-          <div class="card-content">
-            <h3>Shadow Hoodie</h3>
-            <p class="card-price">6 400₽</p>
-            <p class="sizes">Размеры: XS · S · M · L</p>
-            <div class="card-actions">
-              <button class="btn btn-primary open-modal">Примерить</button>
-              <button class="btn">Подробнее</button>
-            </div>
-          </div>
-        </article>
-
-        <article class="product-card">
-          <span class="badge">Hot</span>
-          <img src="https://images.unsplash.com/photo-1495385794356-15371f348c31?auto=format&fit=crop&w=700&q=80" alt="Белая рубашка">
-          <div class="card-content">
-            <h3>Monochrome Shirt</h3>
-            <p class="card-price">5 200₽</p>
-            <p class="sizes">Размеры: S · M · L · XL</p>
-            <div class="card-actions">
-              <button class="btn btn-primary open-modal">Примерить</button>
-              <button class="btn">Подробнее</button>
-            </div>
-          </div>
-        </article>
-      </div>
+      <div class="catalog" id="catalogGrid"></div>
     </section>
 
     <section class="muted-block">
@@ -423,7 +410,58 @@
     </div>
   </dialog>
 
+  <script src="products.js"></script>
   <script>
+    const catalogGrid = document.getElementById('catalogGrid');
+
+    const categoryMeta = {
+      tops: { badge: 'Top', basePrice: 5400, sizes: 'XS · S · M · L' },
+      bottoms: { badge: 'Bottom', basePrice: 6200, sizes: 'S · M · L' },
+      outerwears: { badge: 'Outerwear', basePrice: 9800, sizes: 'M · L · XL' }
+    };
+
+    function toTitle(filePath) {
+      const fileName = filePath.split('/').pop().replace(/\.[^.]+$/, '');
+      return fileName
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    function renderCatalog() {
+      const entries = Object.entries(products || {});
+      if (!entries.length) {
+        catalogGrid.innerHTML = '<p class="sizes">Каталог пуст. Добавьте изображения в папку clothes.</p>';
+        return;
+      }
+
+      const cards = entries.flatMap(([category, items]) => {
+        const meta = categoryMeta[category] || { badge: 'Item', basePrice: 5000, sizes: 'S · M · L' };
+        return items.map((filePath, index) => {
+          const price = (meta.basePrice + index * 350).toLocaleString('ru-RU');
+          return `
+            <article class="product-card">
+              <span class="badge">${meta.badge}</span>
+              <img src="${filePath}" alt="${toTitle(filePath)}">
+              <div class="card-content">
+                <h3>${toTitle(filePath)}</h3>
+                <p class="card-price">${price}₽</p>
+                <p class="sizes">Размеры: ${meta.sizes}</p>
+                <div class="card-actions">
+                  <button class="btn btn-primary open-modal">Примерить</button>
+                  <button class="btn">Подробнее</button>
+                </div>
+              </div>
+            </article>
+          `;
+        });
+      });
+
+      catalogGrid.innerHTML = cards.join('');
+    }
+
+    renderCatalog();
+
     const container = document.getElementById('bubbles-container');
     const bubblesCount = 42;
 
