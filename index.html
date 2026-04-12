@@ -325,6 +325,47 @@
       background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(195, 195, 195, 0.85));
     }
 
+    .product-card.selected {
+      border-color: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.22), 0 22px 42px rgba(0, 0, 0, 0.5);
+    }
+
+    .selection-panel {
+      position: sticky;
+      bottom: 18px;
+      margin-top: 28px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .slot {
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      padding: 10px;
+      color: #cfcfcf;
+      min-height: 72px;
+      font-size: 13px;
+      line-height: 1.45;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .slot strong {
+      display: block;
+      color: #f3f3f3;
+      margin-bottom: 4px;
+    }
+
     @media (max-width: 760px) {
       .hero {
         padding-top: 64px;
@@ -366,6 +407,20 @@
       <div class="catalog" id="catalogGrid"></div>
     </section>
 
+    <section class="selection-panel" aria-live="polite">
+      <strong>Комплект для примерки</strong>
+      <div class="selection-grid">
+        <div class="slot" id="slot-top"><strong>Верх / Кофта</strong>Не выбрано</div>
+        <div class="slot" id="slot-outerwear"><strong>Куртка</strong>Не выбрано</div>
+        <div class="slot" id="slot-bottom"><strong>Низ (штаны)</strong>Не выбрано</div>
+      </div>
+      <span class="sizes" id="selectionHint">Режим 1 элемент: выберите любую 1 вещь. Режим 2 элемента: выберите низ + 1 верх (кофта ИЛИ куртка).</span>
+      <div class="hero-actions" style="justify-content: flex-start; margin-top: 0;">
+        <button class="btn btn-primary" id="openTryOn">Открыть примерку</button>
+        <button class="btn" id="clearSelection">Сбросить выбор</button>
+      </div>
+    </section>
+
     <section class="muted-block">
       <h2 class="section-title" style="margin-top: 0;">Как это работает</h2>
       <ol class="steps">
@@ -394,17 +449,16 @@
 
   <dialog id="tryOnModal">
     <div class="modal-head">
-      <strong>AI примерка (демо UI)</strong>
+      <strong>Примерка комплекта</strong>
       <button class="btn" id="closeModal">Закрыть</button>
     </div>
     <div class="modal-grid">
       <div>
-        <div class="mock">Загрузи фото пользователя<br>в полный рост</div>
-        <button class="btn" style="margin-top: 10px; width: 100%;">Загрузить фото</button>
+        <div class="mock" id="modePreview">Выберите вещи в каталоге</div>
       </div>
       <div>
-        <div class="mock">Здесь появится результат try-on</div>
-        <button class="btn btn-primary" style="margin-top: 10px; width: 100%;">Сгенерировать</button>
+        <div class="mock" id="selectionPreview">Режим примерки ещё не определён</div>
+        <button class="btn btn-primary" id="confirmTryOn" style="margin-top: 10px; width: 100%;">Подтвердить набор</button>
         <div class="progress" aria-label="Прогресс генерации"><span></span></div>
       </div>
     </div>
@@ -413,11 +467,17 @@
   <script src="products.js"></script>
   <script>
     const catalogGrid = document.getElementById('catalogGrid');
+    const slotTop = document.getElementById('slot-top');
+    const slotOuterwear = document.getElementById('slot-outerwear');
+    const slotBottom = document.getElementById('slot-bottom');
+    const selectionHint = document.getElementById('selectionHint');
+
+    const selected = { tops: null, outerwears: null, bottoms: null };
 
     const categoryMeta = {
-      tops: { badge: 'Top', basePrice: 5400, sizes: 'XS · S · M · L' },
-      bottoms: { badge: 'Bottom', basePrice: 6200, sizes: 'S · M · L' },
-      outerwears: { badge: 'Outerwear', basePrice: 9800, sizes: 'M · L · XL' }
+      tops: { badge: 'Верх', basePrice: 5400, sizes: 'XS · S · M · L' },
+      bottoms: { badge: 'Низ', basePrice: 6200, sizes: 'S · M · L' },
+      outerwears: { badge: 'Куртка', basePrice: 9800, sizes: 'M · L · XL' }
     };
 
     function toTitle(filePath) {
@@ -440,7 +500,7 @@
         return items.map((filePath, index) => {
           const price = (meta.basePrice + index * 350).toLocaleString('ru-RU');
           return `
-            <article class="product-card">
+            <article class="product-card" data-category="${category}" data-path="${filePath}">
               <span class="badge">${meta.badge}</span>
               <img src="${filePath}" alt="${toTitle(filePath)}">
               <div class="card-content">
@@ -448,7 +508,7 @@
                 <p class="card-price">${price}₽</p>
                 <p class="sizes">Размеры: ${meta.sizes}</p>
                 <div class="card-actions">
-                  <button class="btn btn-primary open-modal">Примерить</button>
+                  <button class="btn btn-primary select-item">Выбрать</button>
                   <button class="btn">Подробнее</button>
                 </div>
               </div>
@@ -460,7 +520,67 @@
       catalogGrid.innerHTML = cards.join('');
     }
 
+    function renderSelection() {
+      slotTop.innerHTML = `<strong>Верх / Кофта</strong>${selected.tops || 'Не выбрано'}`;
+      slotOuterwear.innerHTML = `<strong>Куртка</strong>${selected.outerwears || 'Не выбрано'}`;
+      slotBottom.innerHTML = `<strong>Низ (штаны)</strong>${selected.bottoms || 'Не выбрано'}`;
+
+      const selectedCount = Object.values(selected).filter(Boolean).length;
+      const hasBottom = Boolean(selected.bottoms);
+      const hasTopVariant = Boolean(selected.tops || selected.outerwears);
+      const hasBothTopVariants = Boolean(selected.tops && selected.outerwears);
+
+      if (hasBothTopVariants) {
+        selectionHint.textContent = 'Ошибка логики: одновременно выбраны кофта и куртка. Оставьте только один верх.';
+        return;
+      }
+
+      if (selectedCount === 0) {
+        selectionHint.textContent = 'Режим 1 элемент: выберите любую 1 вещь. Режим 2 элемента: выберите низ + 1 верх (кофта ИЛИ куртка).';
+      } else if (selectedCount === 1) {
+        selectionHint.textContent = 'Готов режим «1 элемент». Можно открыть примерку или добавить низ + один верх для режима «2 элемента». ';
+      } else if (selectedCount === 2 && hasBottom && hasTopVariant) {
+        selectionHint.textContent = 'Готов режим «2 элемента»: низ + верх.';
+      } else {
+        selectionHint.textContent = 'Сейчас набор невалиден. Для двух вещей нужен только низ + один верх.';
+      }
+
+      document.querySelectorAll('.product-card').forEach((card) => {
+        const category = card.dataset.category;
+        const path = card.dataset.path;
+        card.classList.toggle('selected', selected[category] === toTitle(path));
+      });
+    }
+
+    function selectItem(category, filePath) {
+      const title = toTitle(filePath);
+
+      if (category === 'tops') selected.outerwears = null;
+      if (category === 'outerwears') selected.tops = null;
+
+      selected[category] = selected[category] === title ? null : title;
+      renderSelection();
+    }
+
     renderCatalog();
+    renderSelection();
+
+    catalogGrid.addEventListener('click', (event) => {
+      const button = event.target.closest('.select-item');
+      if (!button) return;
+
+      const card = event.target.closest('.product-card');
+      if (!card) return;
+
+      selectItem(card.dataset.category, card.dataset.path);
+    });
+
+    document.getElementById('clearSelection').addEventListener('click', () => {
+      selected.tops = null;
+      selected.outerwears = null;
+      selected.bottoms = null;
+      renderSelection();
+    });
 
     const container = document.getElementById('bubbles-container');
     const bubblesCount = 42;
@@ -478,17 +598,41 @@
     }
 
     const modal = document.getElementById('tryOnModal');
-    const openButtons = document.querySelectorAll('.open-modal');
     const startButton = document.getElementById('startTryOn');
+    const openTryOn = document.getElementById('openTryOn');
     const closeButton = document.getElementById('closeModal');
+    const modePreview = document.getElementById('modePreview');
+    const selectionPreview = document.getElementById('selectionPreview');
 
     function openTryOnModal() {
+      const hasBottom = Boolean(selected.bottoms);
+      const chosenTop = selected.tops || selected.outerwears;
+      const count = Object.values(selected).filter(Boolean).length;
+
+      if (count === 0) {
+        modePreview.textContent = 'Сначала выберите хотя бы одну вещь в каталоге.';
+        selectionPreview.textContent = 'Примерка пока недоступна.';
+      } else if (count === 1) {
+        modePreview.textContent = 'Режим: 1 элемент.';
+        selectionPreview.textContent = `Выбрано: ${chosenTop || selected.bottoms}`;
+      } else if (count === 2 && hasBottom && chosenTop) {
+        modePreview.textContent = 'Режим: 2 элемента (низ + верх).';
+        selectionPreview.textContent = `Низ: ${selected.bottoms}; Верх: ${chosenTop}`;
+      } else {
+        modePreview.textContent = 'Набор невалиден для примерки.';
+        selectionPreview.textContent = 'Оставьте только низ + один верх ИЛИ одну вещь.';
+      }
+
       modal.showModal();
     }
 
-    openButtons.forEach((button) => button.addEventListener('click', openTryOnModal));
     startButton.addEventListener('click', openTryOnModal);
+    openTryOn.addEventListener('click', openTryOnModal);
     closeButton.addEventListener('click', () => modal.close());
+
+    document.getElementById('confirmTryOn').addEventListener('click', () => {
+      selectionPreview.textContent = 'Отлично! Логика выбора сохранена. Подключение генерации добавим следующим шагом.';
+    });
   </script>
 </body>
 </html>
