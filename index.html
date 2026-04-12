@@ -78,24 +78,22 @@
       padding: 46px 0 20px;
       text-align: center;
     }
-    .brand-mark {
-      position: fixed;
-      top: 92px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1;
-      pointer-events: none;
-      opacity: 0.95;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
     }
 
-    .brand-mark img {
-      width: min(220px, 42vw);
+    .brand img {
+      width: min(380px, 72vw);
       height: auto;
       object-fit: contain;
       border: 0;
       background: transparent;
       padding: 0;
-      filter: none;
+      filter: drop-shadow(0 8px 26px rgba(255, 255, 255, 0.2));
     }
 
     .hero-actions {
@@ -358,22 +356,6 @@
       padding: 10px 0;
     }
 
-    .cart-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-
-    .cart-thumb {
-      width: 16px;
-      height: 16px;
-      object-fit: cover;
-      border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.3);
-      flex: 0 0 auto;
-    }
-
     .cart-actions {
       display: flex;
       gap: 8px;
@@ -404,12 +386,15 @@
 <body>
   <div id="bubbles-container" aria-hidden="true"></div>
 
-  <div class="brand-mark" aria-hidden="true">
+  <div class="logo-mask" aria-hidden="true">
     <img src="logo.png" alt="">
   </div>
 
   <main class="page">
     <section class="hero">
+      <div class="brand">
+        <img src="logo.png" alt="Логотип магазина">
+      </div>
       <div class="hero-actions">
         <button class="btn btn-primary" id="startTryOn">Открыть примерку</button>
         <a class="btn" href="#catalog">Каталог</a>
@@ -447,10 +432,12 @@
     </div>
     <div class="modal-grid">
       <div>
-        <div class="mock" id="upperPreview">Верх не выбран</div>
+        <div class="mock" id="modePreview">Выберите вещи в каталоге</div>
       </div>
       <div>
-        <div class="mock" id="bottomPreview">Низ не выбран</div>
+        <div class="mock" id="selectionPreview">Режим примерки ещё не определён</div>
+        <button class="btn btn-primary" id="confirmTryOn" style="margin-top: 10px; width: 100%;">Подтвердить набор</button>
+        <div class="progress" aria-label="Прогресс генерации"><span></span></div>
       </div>
       <div class="upload-box">
         <div class="mock" id="userPhotoPreview">Загрузите фото в полный рост</div>
@@ -560,7 +547,7 @@
 
       cartList.innerHTML = cart.map((item) => `
         <div class="cart-item">
-          <span class="cart-title"><img class="cart-thumb" src="${item.path}" alt="">${item.title}</span>
+          <span>${item.title}</span>
           <div class="cart-actions">
             <button class="btn btn-primary cart-tryon" data-path="${item.path}">В примерку</button>
             <button class="btn cart-remove" data-path="${item.path}">Удалить</button>
@@ -616,43 +603,29 @@
     const startButton = document.getElementById('startTryOn');
     const openTryOn = document.getElementById('openTryOn');
     const closeButton = document.getElementById('closeModal');
-    const upperPreview = document.getElementById('upperPreview');
-    const bottomPreview = document.getElementById('bottomPreview');
-    const userPhotoInput = document.getElementById('userPhotoInput');
-    const userPhotoPreview = document.getElementById('userPhotoPreview');
+    const modePreview = document.getElementById('modePreview');
+    const selectionPreview = document.getElementById('selectionPreview');
 
     function openTryOnModal() {
-      if (selectedTryOn.upper) {
-        upperPreview.innerHTML = `<img class="tryon-slot-img" src="${selectedTryOn.upper.path}" alt="Верх">`;
+      const count = [selectedTryOn.upper, selectedTryOn.bottom].filter(Boolean).length;
+      if (count === 0) {
+        modePreview.textContent = 'Сначала выберите вещи';
+        selectionPreview.textContent = 'Пока пусто';
+      } else if (count === 1) {
+        modePreview.textContent = 'Режим: 1 элемент';
+        selectionPreview.textContent = `Выбрано: ${selectedTryOn.upper?.title || selectedTryOn.bottom?.title}`;
       } else {
-        upperPreview.textContent = 'Верх не выбран';
+        modePreview.textContent = 'Режим: 2 элемента';
+        selectionPreview.textContent = `Верх: ${selectedTryOn.upper.title}; Низ: ${selectedTryOn.bottom.title}`;
       }
-
-      if (selectedTryOn.bottom) {
-        bottomPreview.innerHTML = `<img class="tryon-slot-img" src="${selectedTryOn.bottom.path}" alt="Низ">`;
-      } else {
-        bottomPreview.textContent = 'Низ не выбран';
-      }
-
       modal.showModal();
     }
 
-    
-    userPhotoInput.addEventListener('change', () => {
-      const file = userPhotoInput.files?.[0];
-      if (!file) {
-        userPhotoPreview.textContent = 'Загрузите фото в полный рост';
-        return;
-      }
-      const previewUrl = URL.createObjectURL(file);
-      userPhotoPreview.innerHTML = `<img class="tryon-slot-img" src="${previewUrl}" alt="Фото пользователя">`;
-    });
-
-startButton.addEventListener('click', openTryOnModal);
+    startButton.addEventListener('click', openTryOnModal);
     openTryOn.addEventListener('click', openTryOnModal);
     closeButton.addEventListener('click', () => modal.close());
     document.getElementById('confirmTryOn').addEventListener('click', () => {
-      userPhotoPreview.textContent = 'Набор сохранён. Следующий шаг — подключение Kling API для генерации результата.';
+      selectionPreview.textContent = 'Выбор сохранён. Можно подключать примерку API на следующем шаге.';
     });
   </script>
 </body>
