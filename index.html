@@ -25,7 +25,7 @@
       margin: 0;
       padding: 0;
       min-height: 100%;
-      background: radial-gradient(circle at 20% 0%, #1b1b1b 0%, var(--bg) 45%, #000 100%);
+      background: #000000;
       color: var(--text);
       font-family: "Inter", "Segoe UI", Arial, sans-serif;
       scroll-behavior: smooth;
@@ -39,7 +39,7 @@
     #bubbles-container {
       position: fixed;
       inset: 0;
-      z-index: 0;
+      z-index: 2;
       pointer-events: none;
     }
 
@@ -68,7 +68,7 @@
 
     .page {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       width: min(1180px, 92vw);
       margin: 0 auto;
       padding-bottom: 80px;
@@ -365,6 +365,10 @@
 </head>
 <body>
   <div id="bubbles-container" aria-hidden="true"></div>
+
+  <div class="logo-mask" aria-hidden="true">
+    <img src="logo.png" alt="">
+  </div>
 
   <main class="page">
     <section class="hero">
