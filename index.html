@@ -78,24 +78,22 @@
       padding: 46px 0 20px;
       text-align: center;
     }
-    .logo-mask {
-      position: fixed;
-      top: 76px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1;
-      pointer-events: none;
-      opacity: 0.28;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
     }
 
-    .logo-mask img {
-      width: min(570px, 86vw);
+    .brand img {
+      width: min(380px, 72vw);
       height: auto;
       object-fit: contain;
       border: 0;
       background: transparent;
       padding: 0;
-      filter: drop-shadow(0 12px 38px rgba(255, 255, 255, 0.15));
+      filter: drop-shadow(0 8px 26px rgba(255, 255, 255, 0.2));
     }
 
     .hero-actions {
@@ -338,22 +336,6 @@
       padding: 10px 0;
     }
 
-    .cart-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-
-    .cart-thumb {
-      width: 14px;
-      height: 14px;
-      object-fit: cover;
-      border-radius: 3px;
-      border: 1px solid rgba(255,255,255,0.3);
-      flex: 0 0 auto;
-    }
-
     .cart-actions {
       display: flex;
       gap: 8px;
@@ -390,6 +372,9 @@
 
   <main class="page">
     <section class="hero">
+      <div class="brand">
+        <img src="logo.png" alt="Логотип магазина">
+      </div>
       <div class="hero-actions">
         <button class="btn btn-primary" id="startTryOn">Открыть примерку</button>
         <a class="btn" href="#catalog">Каталог</a>
@@ -534,7 +519,7 @@
 
       cartList.innerHTML = cart.map((item) => `
         <div class="cart-item">
-          <span class="cart-title"><img class="cart-thumb" src="${item.path}" alt="">${item.title}</span>
+          <span>${item.title}</span>
           <div class="cart-actions">
             <button class="btn btn-primary cart-tryon" data-path="${item.path}">В примерку</button>
             <button class="btn cart-remove" data-path="${item.path}">Удалить</button>
