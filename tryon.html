@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Примерка — Одежда.ру</title>
+  <style>
+    body{margin:0;background:#000;color:#fff;font-family:Inter,Arial,sans-serif}
+    .wrap{max-width:1150px;margin:0 auto;padding:24px 16px 60px;position:relative;z-index:2}
+    #bubbles{position:fixed;inset:0;pointer-events:none;z-index:1}
+    .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);animation:float linear infinite}
+    @keyframes float{0%{transform:translateY(100vh) scale(.6);opacity:0}25%{opacity:.7}100%{transform:translateY(-10vh) scale(1.1);opacity:0}}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .logo{width:min(220px,40vw)}
+    .panel,.card{border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.05)}
+    .panel{padding:14px;margin:16px 0}
+    .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .slot{border:1px dashed rgba(255,255,255,.25);border-radius:10px;padding:10px;min-height:56px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .card{overflow:hidden}
+    .card img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+    .content{padding:10px}
+    .btn{padding:8px 10px;border:1px solid rgba(255,255,255,.3);border-radius:8px;background:none;color:#fff;cursor:pointer}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .cartItem{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(255,255,255,.15)}
+    .cartTitle{display:inline-flex;align-items:center;gap:8px}
+    .thumb{width:16px;height:16px;border-radius:3px;object-fit:cover}
+    dialog{border:1px solid rgba(255,255,255,.22);border-radius:16px;background:#090909;color:#fff;width:min(1100px,95vw)}
+    .modalGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px}
+    .mock{border:1px dashed rgba(255,255,255,.25);border-radius:10px;min-height:220px;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center}
+    .preview{width:100%;height:100%;min-height:220px;object-fit:cover;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div id="bubbles"></div>
+  <div class="wrap">
+    <div class="top">
+      <img class="logo" src="logo.png" alt="Одежда.ру">
+      <div><a href="/" style="color:#fff">Лендинг</a> · <a href="/catalog" style="color:#fff">Каталог</a></div>
+    </div>
+
+    <section class="panel">
+      <strong>Корзина</strong>
+      <div id="cart">Корзина пуста</div>
+    </section>
+
+    <section class="panel">
+      <strong>Комплект для примерки</strong>
+      <div class="slots">
+        <div id="upperSlot" class="slot"><strong>Верх</strong><br>Не выбрано</div>
+        <div id="bottomSlot" class="slot"><strong>Низ</strong><br>Не выбрано</div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="openModal">Открыть примерку</button>
+        <button class="btn" id="clear">Сбросить выбор</button>
+      </div>
+    </section>
+
+    <h2>Каталог для примерки</h2>
+    <section id="grid" class="grid"></section>
+  </div>
+
+  <dialog id="modal">
+    <div style="padding:14px;display:flex;justify-content:space-between;align-items:center"><strong>Примерка комплекта</strong><button class="btn" id="close">Закрыть</button></div>
+    <div class="modalGrid">
+      <div id="upperPreview" class="mock">Верх не выбран</div>
+      <div id="bottomPreview" class="mock">Низ не выбран</div>
+      <div class="mock" id="userPreview">Загрузите фото в полный рост</div>
+    </div>
+    <div style="padding:0 14px 14px">
+      <input id="userInput" type="file" accept="image/*" style="width:100%;margin:6px 0 10px;color:#fff">
+      <button class="btn" style="width:100%">Подтвердить набор</button>
+    </div>
+  </dialog>
+
+  <script src="products.js"></script>
+  <script>
+    const selected = { upper:null, bottom:null };
+    const cart = [];
+    const grid = document.getElementById('grid');
+    const cartEl = document.getElementById('cart');
+    const upperSlot = document.getElementById('upperSlot');
+    const bottomSlot = document.getElementById('bottomSlot');
+    const upperPreview = document.getElementById('upperPreview');
+    const bottomPreview = document.getElementById('bottomPreview');
+    const userPreview = document.getElementById('userPreview');
+    const userInput = document.getElementById('userInput');
+    const modal = document.getElementById('modal');
+
+    const title = p => p.split('/').pop().replace(/\.[^.]+$/, '').replaceAll('_',' ').replace(/\b\w/g, c => c.toUpperCase());
+    const itemObj = (category,path) => ({category,path,title:title(path)});
+
+    function renderSelection(){
+      upperSlot.innerHTML = `<strong>Верх</strong><br>${selected.upper ? selected.upper.title : 'Не выбрано'}`;
+      bottomSlot.innerHTML = `<strong>Низ</strong><br>${selected.bottom ? selected.bottom.title : 'Не выбрано'}`;
+    }
+
+    function renderCart(){
+      if(!cart.length){ cartEl.textContent='Корзина пуста'; return; }
+      cartEl.innerHTML = cart.map(i => `
+        <div class="cartItem">
+          <span class="cartTitle"><img class="thumb" src="${i.path}" alt="">${i.title}</span>
+          <span>
+            <button class="btn" onclick='selectFromCart("${i.path}")'>В примерку</button>
+            <button class="btn" onclick='removeFromCart("${i.path}")'>Удалить</button>
+          </span>
+        </div>
+      `).join('');
+    }
+
+    window.selectFromCart = (path) => {
+      const i = cart.find(x => x.path === path); if(!i) return;
+      if(i.category === 'bottoms') selected.bottom = i; else selected.upper = i;
+      renderSelection();
+    };
+    window.removeFromCart = (path) => {
+      const idx = cart.findIndex(x => x.path === path); if(idx>=0) cart.splice(idx,1);
+      renderCart();
+    };
+
+    const cards = Object.entries(products||{}).flatMap(([category,items]) => items.map(path => ({category,path})));
+    grid.innerHTML = cards.map(({category,path}) => `
+      <article class="card">
+        <img src="${path}" alt="${title(path)}">
+        <div class="content">
+          <strong>${title(path)}</strong><br><small>${category==='bottoms'?'Низ':'Верх'}</small>
+          <div class="actions">
+            <button class="btn" onclick='pick("${category}","${path}")'>В примерку</button>
+            <button class="btn" onclick='addCart("${category}","${path}")'>В корзину</button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+
+    window.pick = (category,path) => {
+      const i = itemObj(category,path);
+      if(category==='bottoms') selected.bottom = i; else selected.upper = i;
+      renderSelection();
+    };
+
+    window.addCart = (category,path) => {
+      const i = itemObj(category,path);
+      if(!cart.some(x=>x.path===path)) cart.push(i);
+      renderCart();
+    };
+
+    const prefill = localStorage.getItem('tryon_prefill');
+    if(prefill){
+      try{ const p = JSON.parse(prefill); window.pick(p.category,p.path); }catch(_){ }
+      localStorage.removeItem('tryon_prefill');
+    }
+
+    document.getElementById('clear').addEventListener('click', ()=>{ selected.upper=null; selected.bottom=null; renderSelection(); });
+    document.getElementById('openModal').addEventListener('click', ()=>{
+      upperPreview.innerHTML = selected.upper ? `<img class="preview" src="${selected.upper.path}" alt="Верх">` : 'Верх не выбран';
+      bottomPreview.innerHTML = selected.bottom ? `<img class="preview" src="${selected.bottom.path}" alt="Низ">` : 'Низ не выбран';
+      modal.showModal();
+    });
+    document.getElementById('close').addEventListener('click', ()=>modal.close());
+    userInput.addEventListener('change', ()=>{
+      const f = userInput.files?.[0];
+      if(!f){ userPreview.textContent = 'Загрузите фото в полный рост'; return; }
+      const u = URL.createObjectURL(f);
+      userPreview.innerHTML = `<img class="preview" src="${u}" alt="Фото пользователя">`;
+    });
+
+    renderSelection();
+    renderCart();
+
+    const bubbles = document.getElementById('bubbles');
+    for(let i=0;i<38;i++){
+      const b = document.createElement('div');
+      b.className='bubble';
+      const size = Math.random()*26 + 8;
+      b.style.width = `${size}px`; b.style.height = `${size}px`;
+      b.style.left = `${Math.random()*100}vw`;
+      b.style.animationDuration = `${7 + Math.random()*14}s`;
+      b.style.animationDelay = `${Math.random()*9}s`;
+      bubbles.appendChild(b);
+    }
+  </script>
+</body>
+</html>
