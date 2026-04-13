@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Каталог — Одежда.ру</title>
+  <style>
+    body{margin:0;background:#000;color:#fff;font-family:Inter,Arial,sans-serif}
+    .wrap{max-width:1150px;margin:0 auto;padding:24px 16px 60px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    a{color:#fff}
+    .grid{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .card{border:1px solid rgba(255,255,255,.2);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.04)}
+    .card img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+    .content{padding:10px}
+    .btn{display:inline-block;margin-top:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.3);border-radius:8px;background:none;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>Каталог</h1>
+      <div><a href="/">Лендинг</a> · <a href="/tryon">Примерка</a></div>
+    </div>
+    <div id="grid" class="grid"></div>
+  </div>
+  <script src="products.js"></script>
+  <script>
+    const grid = document.getElementById('grid');
+    const all = Object.entries(products || {});
+    const title = p => p.split('/').pop().replace(/\.[^.]+$/, '').replaceAll('_',' ').replace(/\b\w/g, c => c.toUpperCase());
+    grid.innerHTML = all.flatMap(([category,items]) => items.map(path => `
+      <article class="card">
+        <img src="${path}" alt="${title(path)}">
+        <div class="content">
+          <strong>${title(path)}</strong><br>
+          <small>${category === 'bottoms' ? 'Низ' : 'Верх'}</small><br>
+          <button class="btn" onclick='localStorage.setItem("tryon_prefill", JSON.stringify({category:"${category}",path:"${path}"})); location.href="/tryon"'>Примерить</button>
+        </div>
+      </article>
+    `)).join('');
+  </script>
+</body>
+</html>

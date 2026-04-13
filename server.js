@@ -223,6 +223,19 @@ async function callKlingTryOn({ userPhotoPath, clothPath }) {
     return await pollTryOnResult({ token, taskId });
 }
 
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/catalog', (req, res) => {
+    res.sendFile(path.join(__dirname, 'catalog.html'));
+});
+
+app.get('/tryon', (req, res) => {
+    res.sendFile(path.join(__dirname, 'tryon.html'));
+});
+
 app.get("/api/health", (req, res) => {
     try {
         const token = generateKlingJwt();
